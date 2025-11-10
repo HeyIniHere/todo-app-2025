@@ -27,8 +27,8 @@ def signup():
         # Add and commit the user to the database
         db.session.add(new_user)
         db.session.commit()
-
-        return redirect(url_for('auth.login'))
+        login_user(new_user)
+        return redirect(url_for('main.todo'))
 
     return render_template('signup.html')
 

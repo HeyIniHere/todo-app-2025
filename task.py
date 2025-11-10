@@ -7,6 +7,7 @@ class Task:
         Task._id_counter += 1
         self.title = title
         self.status = 'not-completed'
+        self.priority = 'low'
 
     def toggle(self):
         """Mark the task as done/undone."""
