@@ -32,6 +32,31 @@ def signup():
 
     return render_template('signup.html')
 
+@auth_blueprint.route('/api/v1/auth/signup', methods=['POST'])
+@login_required
+def signup():
+    data = request.get_json()
+
+    #get email and password
+    email = data.get('email')
+    password = data.get('password')
+
+    #check if user exists
+    existing_user = User.query.filter_by(email).first()
+    if existing_user:
+        return { "error" : "user already exists. please login"}, 404
+    
+    new_user = User(email= email)
+    new_user.password = password
+
+    db.session.add(new_user)
+    db.session.commit()
+
+    return { "user" : new_user.to_dict()}, 201
+
+
+
+
 
 @auth_blueprint.route('/login', methods=['GET', 'POST'])
 def login():
@@ -46,8 +71,36 @@ def login():
         
     return render_template('login.html')
 
+
+@auth_blueprint.route('/api/v1/auth/login', methods=['POST'])
+@login_required
+def login():
+    data = request.get_json()
+
+    #get email and password
+    email = data.get('email')
+    password = data.get('password')
+
+    user = User.query.filter_by(email).first()
+    if user is None or user.check_password(password):
+        return {"user not found"}, 401
+    
+    login_user(user)
+    return {"message" : "User logged in successfully", "user": user.to_dict()}, 200
+
+
+
+
+
 @auth_blueprint.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('auth.login'))
+
+@auth_blueprint.route('/api/v1/auth/logout', methods=['POST'])
+@login_required
+def logout():
+    logout_user()
+    return {"message": "logged out successfully"}, 200
+

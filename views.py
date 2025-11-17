@@ -11,16 +11,79 @@ main_blueprint = Blueprint('main', __name__)
 @main_blueprint.route('/', methods=['GET', 'POST'])
 @login_required
 def todo():
-    # if request.method == 'POST':
-    #     task = request.form['task-text']
-    #     print(task)
-    #     new_task = Task(title=task, user_id=current_user.id)
-    #     db.session.add(new_task)
-    #     db.session.commit()
+    if request.method == 'POST':
+        task = request.form['task-text']
+        print(task)
+        new_task = Task(title=task, user_id=current_user.id)
+        db.session.add(new_task)
+        db.session.commit()
 
-    #tasks = Task.query.filter_by(user_id=current_user.id).all()
-    #return render_template('todo.html', tasks=tasks)
-    return render_template('todo.html')
+    tasks = Task.query.filter_by(user_id=current_user.id).all()
+    return render_template('todo.html', tasks=tasks)
+    # return render_template('todo.html')
+
+@main_blueprint.route('/api/v1/tasks', methods=['POST'])
+@login_required
+def api_get_tasks():
+    tasks = Task.query.filter_by(user_id=current_user.id).all()
+    return {
+        "tasks": [task.to_dict for task in tasks]
+    }, 200
+
+@main_blueprint.route('/api/v1/tasks', methods=['POST'])
+def api_create_tasks():
+    data = request.get_json
+
+    new_task = Task(title=data['title'], user_id=current_user.id)
+    db.session.add(new_task)
+    db.session.commit
+
+    return{ "task": new_task.to_dict()}, 201
+
+@main_blueprint.route('/api/v1/<int:task_id>', methods=['DELETE'])
+@login_required
+def remove_task(task_id):
+    task = Task.query.get(task_id)
+
+    if task is None:
+        return{"error": "Task not found"},404
+    
+    db.session.delete(task)
+    db.session.commit()
+
+    return { "message deleted successfully"}, 200
+
+@main_blueprint.route('/api/v1/<int:task_id>', methods=["PUT"])
+@login_required
+def update_task(task_id):
+    task = Task.query.get(task_id)
+
+    if task is None:
+        return {"error" : "Task not found"}, 404
+    
+    data = request.get_json()
+
+    for key, value in data.items():
+        setattr(task, key, value)
+    
+    db.session.commit()
+    return { "task" : task.to_dict()}, 200
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @main_blueprint.route('/api/v1/tasks', methods=['GET'])
 @login_required
